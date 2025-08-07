@@ -1,0 +1,14 @@
+[
+  {
+    "id": "prod-001",
+    "name": "Ejemplo Producto",
+    "description": "Descripción del producto",
+    "price": 29.99,
+    "sizes": ["S", "M", "L"],
+    "colors": ["#FF0000", "#00FF00"],
+    "category": "Categoría",
+    "media": {
+      "main": "ejemplo-producto.jpg"
+    }
+  }
+]

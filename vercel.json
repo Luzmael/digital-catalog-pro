@@ -2,20 +2,28 @@
   "version": 2,
   "builds": [
     {
-      "src": "tiendas/**/index.html",
+      "src": "tiendas/_template/index.html",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/tiendas/([^/]+)/data/(.*\\.json)",
+      "src": "/data/(.*)",
+      "dest": "/tiendas/_template/data/$1",
       "headers": {
-        "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=3600"
+        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+        "Content-Type": "application/json"
       }
     },
     {
-      "src": "/tiendas/(.*)",
+      "src": "/public/(.*)",
+      "dest": "/tiendas/_template/public/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/(.*)",
       "dest": "/tiendas/_template/index.html"
     }
   ]

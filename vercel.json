@@ -12,8 +12,7 @@
   ],
   "routes": [
     {
-      "src": "/tiendas/(?<store>[^/]+)/data/(?<file>[^/]+\\.json)"
-
+      "src": "/tiendas/(?<store>[^/]+)/data/(?<file>[^/]+\\.json)",
       "dest": "/edge-functions/get-store-config.js?store=$store&file=$file"
     },
     {

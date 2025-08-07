@@ -1146,35 +1146,38 @@
                 
                 whatsappNumber = whatsappData.phone_number || whatsappNumber;
                 
-                // Cargar productos
-                const productsResponse = await fetch('/data/products.json');
-                if (!productsResponse.ok) throw new Error('Failed to load products');
-                const productsData = await productsResponse.json();
-                
-                return {
-                    products: productsData.map(product => ({
-                        id: product.id,
-                        name: product.name || 'Unnamed Product',
-                        description: product.description || '',
-                        price: `Bs ${(parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0) * currentExchangeRate).toFixed(2)}`,
-                        originalPrice: product.price || '$0.00',
-                       priceValue: parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0),
-                        image: product.image || 'https://via.placeholder.com/500',
-                        images: product.images || [],
-                        video: product.video || '',
-                        sizes: product.sizes || [],
-                        colors: product.colors || [],
-                        badge: product.badge || '',
-                        category: product.category || 'Uncategorized'
-                    })),
-                    categories: [...new Set(productsData.map(p => p.category))]
-                };
-                
-            } catch (error) {
-                console.error("Error loading data:", error);
-                return { products: [], categories: [] };
-            }
-        }
+               async function cargarDatos() {
+  try {
+    // Cargar productos
+    const productsResponse = await fetch('/data/products.json');
+    if (!productsResponse.ok) throw new Error('Failed to load products');
+    const productsData = await productsResponse.json();
+
+    return {
+      products: productsData.map(product => ({
+        id: product.id,
+        name: product.name || 'Unnamed Product',
+        description: product.description || '',
+        price: `Bs ${(parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0) * currentExchangeRate).toFixed(2)}`,
+        originalPrice: product.price || '$0.00',
+        priceValue: parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0),
+        image: product.image || 'https://via.placeholder.com/500',
+        images: product.images || [],
+        video: product.video || '',
+        sizes: product.sizes || [],
+        colors: product.colors || [],
+        badge: product.badge || '',
+        category: product.category || 'Uncategorized'
+      })),
+      categories: [...new Set(productsData.map(p => p.category))]
+    };
+
+  } catch (error) {
+    console.error("Error loading data:", error);
+    return { products: [], categories: [] };
+  }
+}
+
 
         // Display products in catalog
         function displayProducts(productsToShow) {

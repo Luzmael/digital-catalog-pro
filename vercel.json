@@ -8,7 +8,7 @@
   ],
   "routes": [
     {
-      "src": "/tiendas/([^/]+)/data/(.*\.json)",
+      "src": "/tiendas/([^/]+)/data/(.*\\.json)",
       "headers": {
         "Content-Type": "application/json",
         "Cache-Control": "public, max-age=3600"

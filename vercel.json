@@ -3,24 +3,21 @@
   "builds": [
     {
       "src": "tiendas/**/index.html",
-      "use": "@vercel/static"  
+      "use": "@vercel/static"
     },
     {
       "src": "edge-functions/get-store-config.js",
-      "use": "@vercel/edge"  
+      "use": "@vercel/edge"
     }
   ],
   "routes": [
     {
       "src": "/tiendas/(?<store>[^/]+)/data/(?<file>[^/]+\.json)",
-      "dest": "/edge-functions/get-store-config.js?store=$store&file=$file",
-      "headers": {
-        "Cache-Control": "public, s-maxage=3600"
-      }
+      "dest": "/edge-functions/get-store-config.js?store=$store&file=$file"
     },
     {
       "src": "/tiendas/(.*)",
-      "dest": "/tiendas/_template/index.html"  
+      "dest": "/tiendas/_template/index.html"
     }
   ]
 }

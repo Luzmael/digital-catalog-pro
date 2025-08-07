@@ -8,7 +8,14 @@
   ],
   "routes": [
     {
-      "src": "/tiendas/([^/]+)/?.*",
+      "src": "/tiendas/([^/]+)/data/(.*\.json)",
+      "headers": {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, max-age=3600"
+      }
+    },
+    {
+      "src": "/tiendas/(.*)",
       "dest": "/tiendas/_template/index.html"
     }
   ]

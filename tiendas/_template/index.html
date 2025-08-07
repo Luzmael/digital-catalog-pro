@@ -1128,53 +1128,62 @@
                 : url;
         }
         
-        // Función para cargar datos desde archivos JSON
-        async function loadData() {
-            try {
-                // Cargar configuración
-                const settingsResponse = await fetch('/data/settings.json');
-                if (!settingsResponse.ok) throw new Error('Failed to load settings');
-                const settings = await settingsResponse.json();
-                
-                currentExchangeRate = parseFloat(settings.rate) || 115.33;
-                shippingCost = parseFloat(settings.shipping_cost) || 0;
-                
-                // Cargar configuración de WhatsApp
-                const whatsappResponse = await fetch('/data/whatsapp.json');
-                if (!whatsappResponse.ok) throw new Error('Failed to load WhatsApp settings');
-                const whatsappData = await whatsappResponse.json();
-                
-                whatsappNumber = whatsappData.phone_number || whatsappNumber;
-                
-               async function cargarDatos() {
+      // Función para cargar datos desde archivos JSON
+async function loadData() {
   try {
-    // Cargar productos
-    const productsResponse = await fetch('/data/products.json');
-    if (!productsResponse.ok) throw new Error('Failed to load products');
-    const productsData = await productsResponse.json();
+    // Cargar configuración
+    const settingsResponse = await fetch('data/settings.json');
+    if (!settingsResponse.ok) throw new Error('Failed to load settings');
+    const settings = await settingsResponse.json();
 
-    return {
-      products: productsData.map(product => ({
-        id: product.id,
-        name: product.name || 'Unnamed Product',
-        description: product.description || '',
-        price: `Bs ${(parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0) * currentExchangeRate).toFixed(2)}`,
-        originalPrice: product.price || '$0.00',
-        priceValue: parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0),
-        image: product.image || 'https://via.placeholder.com/500',
-        images: product.images || [],
-        video: product.video || '',
-        sizes: product.sizes || [],
-        colors: product.colors || [],
-        badge: product.badge || '',
-        category: product.category || 'Uncategorized'
-      })),
-      categories: [...new Set(productsData.map(p => p.category))]
-    };
+    currentExchangeRate = parseFloat(settings.rate) || 115.33;
+    shippingCost = parseFloat(settings.shipping_cost) || 0;
+
+    // Cargar configuración de WhatsApp
+    const whatsappResponse = await fetch('data/whatsapp.json');
+    if (!whatsappResponse.ok) throw new Error('Failed to load WhatsApp settings');
+    const whatsappData = await whatsappResponse.json();
+
+    whatsappNumber = whatsappData.phone_number || whatsappNumber;
+
+    // Función interna para cargar productos
+    async function cargarDatos() {
+      try {
+        const productsResponse = await fetch('data/products.json');
+        if (!productsResponse.ok) throw new Error('Failed to load products');
+        const productsData = await productsResponse.json();
+
+        return {
+          products: productsData.map(product => ({
+            id: product.id,
+            name: product.name || 'Unnamed Product',
+            description: product.description || '',
+            price: `Bs ${(parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0) * currentExchangeRate).toFixed(2)}`,
+            originalPrice: product.price || '$0.00',
+            priceValue: parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0),
+            image: product.image || 'https://via.placeholder.com/500',
+            images: product.images || [],
+            video: product.video || '',
+            sizes: product.sizes || [],
+            colors: product.colors || [],
+            badge: product.badge || '',
+            category: product.category || 'Uncategorized'
+          })),
+          categories: [...new Set(productsData.map(p => p.category))]
+        };
+
+      } catch (error) {
+        console.error("Error loading data:", error);
+        return { products: [], categories: [] };
+      }
+    }
+
+    // Puedes llamar aquí a cargarDatos() si lo necesitas
+    const { products, categories } = await cargarDatos();
+    displayProducts(products);
 
   } catch (error) {
     console.error("Error loading data:", error);
-    return { products: [], categories: [] };
   }
 }
 

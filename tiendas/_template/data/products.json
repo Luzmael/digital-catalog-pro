@@ -8,7 +8,31 @@
     "colors": ["#FF0000", "#00FF00"],
     "category": "Categoría",
     "media": {
-      "main": "ejemplo-producto.jpg"
+      "main": "ejemplo-producto.webp"
+    }
+  },
+  {
+    "id": "prod-002",
+    "name": "Camiseta Negra",
+    "description": "Camiseta básica color negro",
+    "price": 19.99,
+    "sizes": ["M", "L", "XL"],
+    "colors": ["#000000"],
+    "category": "Ropa",
+    "media": {
+      "main": "camiseta-negra.jpg"
+    }
+  },
+  {
+    "id": "prod-003",
+    "name": "Zapatos Deportivos",
+    "description": "Zapatos cómodos para correr",
+    "price": 49.99,
+    "sizes": ["40", "41", "42"],
+    "colors": ["#FFFFFF", "#0000FF"],
+    "category": "Calzado",
+    "media": {
+      "main": "zapatos-deportivos.jpg"
     }
   }
 ]

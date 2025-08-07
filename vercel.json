@@ -3,11 +3,11 @@
   "builds": [
     {
       "src": "tiendas/**/index.html",
-      "use": "@vercel/static"  // Indica que es un proyecto estático
+      "use": "@vercel/static"  
     },
     {
       "src": "edge-functions/get-store-config.js",
-      "use": "@vercel/edge"  // Habilita Edge Functions
+      "use": "@vercel/edge"  
     }
   ],
   "routes": [
@@ -20,7 +20,7 @@
     },
     {
       "src": "/tiendas/(.*)",
-      "dest": "/tiendas/_template/index.html"  // Ruta base para las tiendas
+      "dest": "/tiendas/_template/index.html"  
     }
   ]
 }

@@ -6,9 +6,10 @@
     <title>Digital Catalog Pro</title>
     <!-- Meta tags para identificación única -->
     <meta name="whatsapp-uuid" content="a327e09a-0f45-4327-abb6-13e0f1fab85d">
-    <meta name="html-name" content="Tienda tres">
+    <meta name="html-name" content="_template">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -1102,10 +1103,10 @@
     </div>
 
     <script>
-        // ████████████████████████████████████████████████████████████████████████
-        // CONFIGURACIÓN INICIAL (EDITAR SOLO ESTO)
-        const STORE_NAME = 'tienda-tres'; // Cambiar por el nombre de tu carpeta (ej: 'tienda-caracas')
-        // ████████████████████████████████████████████████████████████████████████
+        // 1. Configuración de Supabase
+        const supabaseUrl = 'https://bekzfacymgaytpgfqrzg.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJla3pmYWN5bWdheXRwZ2ZxcnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMjAzNjcsImV4cCI6MjA2OTY5NjM2N30.R1hbWLGSvp6LcqqsDd-ibTGMS_mrGNl0oP-Ah-0iSt8';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         // Variables globales
         let currentExchangeRate = 115.33;
@@ -1114,11 +1115,56 @@
         let products = [];
         let categories = [];
         let whatsappNumber = '584149834667'; // Valor por defecto
-        let htmlName = 'Tienda Principal'; // Valor por defecto
+        let htmlName = '_template'; // Valor por defecto
 
         // Obtener configuración del HTML
         const whatsappUUID = document.querySelector('meta[name="whatsapp-uuid"]')?.content;
         htmlName = document.querySelector('meta[name="html-name"]')?.content || htmlName;
+
+        // Función para obtener configuración de WhatsApp
+        async function loadWhatsAppNumber() {
+            try {
+                const whatsappUUID = document.querySelector('meta[name="whatsapp-uuid"]')?.content;
+                
+                if (!whatsappUUID) throw new Error("No se encontró el UUID en el HTML");
+
+                const { data, error } = await supabaseClient
+                    .from('whatsapp_numbers')
+                    .select('phone_number, is_active')
+                    .eq('id', whatsappUUID)
+                    .eq('is_active', true)
+                    .single();
+
+                if (error) throw error;
+                if (!data?.phone_number) throw new Error("Número no encontrado o inactivo");
+
+                whatsappNumber = data.phone_number;
+                console.log("UUID usado:", whatsappUUID, "Número configurado:", whatsappNumber);
+                return true;
+            } catch (error) {
+                console.error("Error al cargar número:", error.message);
+                alert(`Error: ${error.message}\nVerifica que el UUID ${whatsappUUID} existe y está activo en Supabase.`);
+                return false;
+            }
+        }
+
+        // Función para obtener configuración de la app
+        async function getAppSettings() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('app_settings')
+                    .select('*')
+                    .limit(1);
+
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    currentExchangeRate = parseFloat(data[0].rate) || 115.33;
+                    shippingCost = parseFloat(data[0].shipping_cost) || 0;
+                }
+            } catch (error) {
+                console.error("Error al cargar configuraciones:", error);
+            }
+        }
 
         // YouTube embed URL converter
         function getYouTubeEmbedUrl(url) {
@@ -1133,41 +1179,36 @@
                 : url;
         }
         
-        // Función para cargar productos desde JSON local
+        // Función para cargar productos
         async function loadProducts() {
             try {
-                // Cargar configuración de la tienda
-                const settingsRes = await fetch(`/tiendas/${STORE_NAME}/data/settings.json`);
-                const settings = await settingsRes.json();
-                currentExchangeRate = parseFloat(settings.rate) || 115.33;
-                shippingCost = parseFloat(settings.shipping_cost) || 0;
+                await getAppSettings();
                 
-                // Cargar productos
-                const response = await fetch(`/tiendas/${STORE_NAME}/data/products.json`);
-                const data = await response.json();
+                const { data, error } = await supabaseClient
+                    .from('products')
+                    .select('*');
+                
+                if (error) throw error;
                 
                 if (data && data.length > 0) {
-                    products = data.map(product => {
-                        const imageBaseUrl = `/tiendas/${STORE_NAME}/public/images/`;
-                        return {
+                    return {
+                        products: data.map(product => ({
                             id: product.id,
                             name: product.name || 'Unnamed Product',
                             description: product.description || '',
-                            price: `Bs ${(parseFloat(product.price || 0) * currentExchangeRate).toFixed(2)}`,
+                            price: `Bs ${(parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0) * currentExchangeRate).toFixed(2)}`,
                             originalPrice: product.price || '$0.00',
-                            priceValue: parseFloat(product.price || 0),
-                            image: product.media?.main ? `${imageBaseUrl}${product.media.main}` : 'https://via.placeholder.com/500',
-                            images: product.media?.gallery ? product.media.gallery.map(img => `${imageBaseUrl}${img}`) : [],
-                            video: product.media?.video || '',
+                            priceValue: parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0),
+                            image: product.image || 'https://via.placeholder.com/500',
+                            images: product.images || [],
+                            video: product.video || '',
                             sizes: product.sizes || [],
                             colors: product.colors || [],
                             badge: product.badge || '',
                             category: product.category || 'Uncategorized'
-                        };
-                    });
-                    
-                    categories = [...new Set(data.map(p => p.category))];
-                    return { products, categories };
+                        })),
+                        categories: [...new Set(data.map(p => p.category))]
+                    };
                 }
                 
                 return { products: [], categories: [] };
@@ -1900,7 +1941,13 @@
             // Inicializar la aplicación
             async function initApp() {
                 try {
-                    // Cargar productos y configuración
+                    // Cargar configuración de WhatsApp
+                    await loadWhatsAppNumber();
+                    
+                    // Cargar configuración de la app
+                    await getAppSettings();
+                    
+                    // Cargar productos
                     const { products: loadedProducts, categories: loadedCategories } = await loadProducts();
                     products = loadedProducts;
                     categories = loadedCategories;

@@ -4,12 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Catalog Pro</title>
-    <!-- Meta tags para identificación única -->
-    <meta name="whatsapp-uuid" content="a327e09a-0f45-4327-abb6-13e0f1fab85d">
-    <meta name="html-name" content="_template">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -1103,68 +1098,15 @@
     </div>
 
     <script>
-        // 1. Configuración de Supabase
-        const supabaseUrl = 'https://bekzfacymgaytpgfqrzg.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJla3pmYWN5bWdheXRwZ2ZxcnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxMjAzNjcsImV4cCI6MjA2OTY5NjM2N30.R1hbWLGSvp6LcqqsDd-ibTGMS_mrGNl0oP-Ah-0iSt8';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
         // Variables globales
         let currentExchangeRate = 115.33;
-        let shippingCost = 0;
+        let shippingCost = 15.00;
+        let minOrderQuantity = 8;
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let products = [];
         let categories = [];
-        let whatsappNumber = '584149834667'; // Valor por defecto
-        let htmlName = '_template'; // Valor por defecto
-
-        // Obtener configuración del HTML
-        const whatsappUUID = document.querySelector('meta[name="whatsapp-uuid"]')?.content;
-        htmlName = document.querySelector('meta[name="html-name"]')?.content || htmlName;
-
-        // Función para obtener configuración de WhatsApp
-        async function loadWhatsAppNumber() {
-            try {
-                const whatsappUUID = document.querySelector('meta[name="whatsapp-uuid"]')?.content;
-                
-                if (!whatsappUUID) throw new Error("No se encontró el UUID en el HTML");
-
-                const { data, error } = await supabaseClient
-                    .from('whatsapp_numbers')
-                    .select('phone_number, is_active')
-                    .eq('id', whatsappUUID)
-                    .eq('is_active', true)
-                    .single();
-
-                if (error) throw error;
-                if (!data?.phone_number) throw new Error("Número no encontrado o inactivo");
-
-                whatsappNumber = data.phone_number;
-                console.log("UUID usado:", whatsappUUID, "Número configurado:", whatsappNumber);
-                return true;
-            } catch (error) {
-                console.error("Error al cargar número:", error.message);
-                alert(`Error: ${error.message}\nVerifica que el UUID ${whatsappUUID} existe y está activo en Supabase.`);
-                return false;
-            }
-        }
-
-        // Función para obtener configuración de la app
-        async function getAppSettings() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('app_settings')
-                    .select('*')
-                    .limit(1);
-
-                if (error) throw error;
-                if (data && data.length > 0) {
-                    currentExchangeRate = parseFloat(data[0].rate) || 115.33;
-                    shippingCost = parseFloat(data[0].shipping_cost) || 0;
-                }
-            } catch (error) {
-                console.error("Error al cargar configuraciones:", error);
-            }
-        }
+        let whatsappNumber = '584149834667';
+        let storeName = 'Nombre de Tienda';
 
         // YouTube embed URL converter
         function getYouTubeEmbedUrl(url) {
@@ -1178,41 +1120,63 @@
                 ? `https://www.youtube.com/embed/${match[2]}?autoplay=1&rel=0` 
                 : url;
         }
-        
-        // Función para cargar productos
+
+        // Cargar configuración
+        async function loadConfig() {
+            try {
+                const response = await fetch('./data/settings.json');
+                if (!response.ok) throw new Error('No se pudo cargar la configuración');
+                const settings = await response.json();
+                
+                currentExchangeRate = settings.rate || 115.33;
+                shippingCost = settings.shipping_cost || 15.00;
+                minOrderQuantity = settings.min_order_quantity || 8;
+                storeName = settings.store_name || 'Nombre de Tienda';
+                
+                document.title = storeName;
+                document.querySelector('h1').textContent = storeName;
+            } catch (error) {
+                console.error('Error cargando configuración:', error);
+            }
+        }
+
+        // Cargar WhatsApp config
+        async function loadWhatsAppConfig() {
+            try {
+                const response = await fetch('./data/whatsapp.json');
+                if (!response.ok) throw new Error('No se pudo cargar la configuración de WhatsApp');
+                const whatsappConfig = await response.json();
+                whatsappNumber = whatsappConfig.phone_number || '584149834667';
+            } catch (error) {
+                console.error('Error cargando WhatsApp config:', error);
+            }
+        }
+
+        // Cargar productos
         async function loadProducts() {
             try {
-                await getAppSettings();
+                const response = await fetch('./data/products.json');
+                if (!response.ok) throw new Error('No se pudo cargar los productos');
+                const productsData = await response.json();
                 
-                const { data, error } = await supabaseClient
-                    .from('products')
-                    .select('*');
-                
-                if (error) throw error;
-                
-                if (data && data.length > 0) {
-                    return {
-                        products: data.map(product => ({
-                            id: product.id,
-                            name: product.name || 'Unnamed Product',
-                            description: product.description || '',
-                            price: `Bs ${(parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0) * currentExchangeRate).toFixed(2)}`,
-                            originalPrice: product.price || '$0.00',
-                            priceValue: parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0),
-                            image: product.image || 'https://via.placeholder.com/500',
-                            images: product.images || [],
-                            video: product.video || '',
-                            sizes: product.sizes || [],
-                            colors: product.colors || [],
-                            badge: product.badge || '',
-                            category: product.category || 'Uncategorized'
-                        })),
-                        categories: [...new Set(data.map(p => p.category))]
-                    };
-                }
-                
-                return { products: [], categories: [] };
-                
+                return {
+                    products: productsData.map(product => ({
+                        id: product.id,
+                        name: product.name || 'Unnamed Product',
+                        description: product.description || '',
+                        price: `Bs ${(product.price * currentExchangeRate).toFixed(2)}`,
+                        originalPrice: `$${product.price.toFixed(2)}`,
+                        priceValue: product.price,
+                        image: `./public/images/${product.media.main}`,
+                        images: product.media.additional ? product.media.additional.map(img => `./public/images/${img}`) : [],
+                        video: product.media.video || '',
+                        sizes: product.sizes || [],
+                        colors: product.colors || [],
+                        badge: product.badge || '',
+                        category: product.category || 'Uncategorized'
+                    })),
+                    categories: [...new Set(productsData.map(p => p.category))]
+                };
             } catch (error) {
                 console.error("Error loading products:", error);
                 return { products: [], categories: [] };
@@ -1616,10 +1580,10 @@
             cartItemsEl.innerHTML = '';
             
             // Mostrar mensaje de mínimo de pedido si es necesario
-            if (totalItems > 0 && totalItems < 8) {
+            if (totalItems > 0 && totalItems < minOrderQuantity) {
                 const minOrderMsg = document.createElement('div');
                 minOrderMsg.className = 'min-order-message';
-                minOrderMsg.innerHTML = `⚠️ Mínimo de pedido: 8 productos (actual: ${totalItems})`;
+                minOrderMsg.innerHTML = `⚠️ Mínimo de pedido: ${minOrderQuantity} productos (actual: ${totalItems})`;
                 cartItemsEl.appendChild(minOrderMsg);
             }
             
@@ -1698,7 +1662,7 @@
             cartSubtotal.textContent = `Bs ${subtotal.toFixed(2)}`;
             
             // Mostrar u ocultar información de envío según la cantidad de productos
-            if (totalItems >= 8) {
+            if (totalItems >= minOrderQuantity) {
                 shippingInfo.classList.add('visible');
                 cartShipping.textContent = `Bs ${shippingCost.toFixed(2)}`;
                 cartTotal.textContent = `Bs ${(subtotal + shippingCost).toFixed(2)}`;
@@ -1708,7 +1672,7 @@
             }
             
             // Actualizar estado del botón de WhatsApp
-            if (totalItems < 8) {
+            if (totalItems < minOrderQuantity) {
                 sendWhatsAppBtn.classList.add('disabled');
                 sendWhatsAppBtn.disabled = true;
             } else {
@@ -1765,8 +1729,8 @@
             
             // Verificar nuevamente la cantidad por si cambió el carrito
             const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-            if (totalItems < 8) {
-                alert(`Se requieren al menos 8 productos para realizar el envío. Actualmente tiene ${totalItems} productos.`);
+            if (totalItems < minOrderQuantity) {
+                alert(`Se requieren al menos ${minOrderQuantity} productos para realizar el envío. Actualmente tiene ${totalItems} productos.`);
                 return;
             }
             
@@ -1803,7 +1767,7 @@
             message += `\n*Subtotal:* Bs ${subtotal.toFixed(2)}`;
             
             // Solo incluir envío si se alcanzó el mínimo
-            if (totalItems >= 8) {
+            if (totalItems >= minOrderQuantity) {
                 message += `\n*Envío:* Bs ${shippingCost.toFixed(2)}`;
                 message += `\n*Total:* Bs ${(subtotal + shippingCost).toFixed(2)}\n\n`;
             } else {
@@ -1837,8 +1801,8 @@
             // Calcular cantidad total de productos
             const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
             
-            if (totalItems < 8) {
-                alert(`Se requieren al menos 8 productos para realizar el envío. Actualmente tiene ${totalItems} productos.`);
+            if (totalItems < minOrderQuantity) {
+                alert(`Se requieren al menos ${minOrderQuantity} productos para realizar el envío. Actualmente tiene ${totalItems} productos.`);
                 return;
             }
             
@@ -1941,11 +1905,9 @@
             // Inicializar la aplicación
             async function initApp() {
                 try {
-                    // Cargar configuración de WhatsApp
-                    await loadWhatsAppNumber();
-                    
-                    // Cargar configuración de la app
-                    await getAppSettings();
+                    // Cargar configuración
+                    await loadConfig();
+                    await loadWhatsAppConfig();
                     
                     // Cargar productos
                     const { products: loadedProducts, categories: loadedCategories } = await loadProducts();
@@ -1955,7 +1917,7 @@
                     if (products.length === 0) {
                         document.getElementById('catalog').innerHTML = `
                             <div class="error-message">
-                                <i class="fas fa-info-circle"></i> No se encontraron productos en la base de datos
+                                <i class="fas fa-info-circle"></i> No se encontraron productos en el catálogo
                             </div>
                         `;
                         return;

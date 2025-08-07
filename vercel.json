@@ -4,19 +4,11 @@
     {
       "src": "tiendas/**/index.html",
       "use": "@vercel/static"
-    },
-    {
-      "src": "edge-functions/get-store-config.js",
-      "use": "@vercel/edge"
     }
   ],
   "routes": [
     {
-      "src": "/tiendas/(?<store>[^/]+)/data/(?<file>[^/]+\\.json)",
-      "dest": "/edge-functions/get-store-config.js?store=$store&file=$file"
-    },
-    {
-      "src": "/tiendas/(.*)",
+      "src": "/tiendas/([^/]+)/?.*",
       "dest": "/tiendas/_template/index.html"
     }
   ]
